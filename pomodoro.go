@@ -11,20 +11,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/justincampbell/tmux-pomodoro/tmux"
 	"github.com/0xAX/notificator"
+	"github.com/justincampbell/tmux-pomodoro/tmux"
 )
 
 const timeFormat = time.RFC3339
 
-var duration, _ = time.ParseDuration("25m")
+var duration, _ = time.ParseDuration("30m")
 var noTime time.Time
 var notify *notificator.Notificator
 
 const usage = `
 github.com/justincampbell/tmux-pomodoro
 
-  pomodoro start   Start a timer for 25 minutes
+  pomodoro start   Start a timer for 30 minutes
   pomodoro status  Show the remaining time, or an exclamation point if done
   pomodoro clear   Clear the timer
 `
@@ -68,7 +68,7 @@ func main() {
 	}
 
 	notify = notificator.New(notificator.Options{
-		AppName:     "tmux-pomodoro",
+		AppName: "tmux-pomodoro",
 	})
 
 	newState, output := parseCommand(state, command)
@@ -96,7 +96,7 @@ func parseCommand(state State, command string) (newState State, output Output) {
 	switch command {
 	case "start":
 		newState.endTime = state.now.Add(duration)
-		output.text = "Timer started, 25 minutes remaining"
+		output.text = "Timer started, 30 minutes remaining"
 		killRunningBeepers()
 		_ = startBeeper()
 		refreshTmux()
@@ -104,7 +104,7 @@ func parseCommand(state State, command string) (newState State, output Output) {
 		if state.endTime == noTime {
 			return
 		}
-		output.text = formatRemainingTime(state.endTime, state.now) + " 🍅 "
+		output.text = formatRemainingTime(state.endTime, state.now)
 	case "clear":
 		newState.endTime = noTime
 		output.text = "Pomodoro cleared!"
@@ -167,10 +167,16 @@ func formatRemainingTime(existingTime time.Time, now time.Time) string {
 	remainingMinutes := remaining.Minutes()
 
 	if remainingMinutes >= 0 {
-		return strconv.FormatFloat(remainingMinutes, 'f', 0, 64)
+		return strconv.FormatFloat(remainingMinutes, 'f', 0, 64) + " 🍅 "
+	} else {
+		excess := now.Sub(existingTime)
+		excessMinutes := excess.Minutes()
+		if excessMinutes <= 5 {
+			return strconv.FormatFloat(excessMinutes, 'f', 0, 64) + " ☕"
+		} else {
+			return strconv.FormatFloat(excessMinutes, 'f', 0, 64) + "❗️" + "❗️" + "❗️"
+		}
 	}
-
-	return "❗️"
 }
 
 func writeTime(t time.Time) {
