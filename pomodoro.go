@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/0xAX/notificator"
-	"github.com/justincampbell/tmux-pomodoro/tmux"
+	"github.com/giangdo/tmux-pomodoro/tmux"
 )
 
 const timeFormat = time.RFC3339
@@ -167,14 +167,16 @@ func formatRemainingTime(existingTime time.Time, now time.Time) string {
 	remainingMinutes := remaining.Minutes()
 
 	if remainingMinutes >= 0 {
-		return strconv.FormatFloat(remainingMinutes, 'f', 0, 64) + " 🍅 "
+		return "🔻  " + strconv.FormatFloat(remainingMinutes, 'f', 0, 64) + " 🍅 "
 	} else {
 		excess := now.Sub(existingTime)
 		excessMinutes := excess.Minutes()
 		if excessMinutes <= 5 {
-			return strconv.FormatFloat(excessMinutes, 'f', 0, 64) + " ☕"
+			// display remain break time in total 5min
+			return "🔻  " + strconv.FormatFloat(5-excessMinutes, 'f', 0, 64) + " ☕"
 		} else {
-			return strconv.FormatFloat(excessMinutes, 'f', 0, 64) + "❗️" + "❗️" + "❗️"
+			// display the time excess after finish 5min break time
+			return "🔺  " + strconv.FormatFloat(excessMinutes-5, 'f', 0, 64) + "❗️"
 		}
 	}
 }
