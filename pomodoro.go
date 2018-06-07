@@ -18,6 +18,7 @@ import (
 const timeFormat = time.RFC3339
 
 var duration, _ = time.ParseDuration("30m")
+var playDuration, _ = time.ParseDuration("15m")
 var noTime time.Time
 var notify *notificator.Notificator
 
@@ -97,6 +98,9 @@ func parseCommand(state State, command string) (newState State, output Output) {
 	case "start":
 		newState.endTime = state.now.Add(duration)
 		output.text = "Timer started, 30 minutes remaining"
+		notify.Push("Pomodoro", output.text, "", notificator.UR_NORMAL)
+		_, _ = exec.Command("say", output.text).Output()
+
 		killRunningBeepers()
 		_ = startBeeper()
 		refreshTmux()
@@ -115,6 +119,8 @@ func parseCommand(state State, command string) (newState State, output Output) {
 		var message = "Pomodoro done, take a break!"
 		_ = tmux.DisplayMessage(message)
 		notify.Push("Pomodoro", message, "", notificator.UR_NORMAL)
+		_, _ = exec.Command("say", message).Output()
+
 		refreshTmux()
 	case "":
 		flag.Usage()
@@ -167,16 +173,16 @@ func formatRemainingTime(existingTime time.Time, now time.Time) string {
 	remainingMinutes := remaining.Minutes()
 
 	if remainingMinutes >= 0 {
-		return "🔻  " + strconv.FormatFloat(remainingMinutes, 'f', 0, 64) + " 🍅 "
+		return "▼ " + strconv.FormatFloat(remainingMinutes, 'f', 0, 64) + " work "
 	} else {
 		excess := now.Sub(existingTime)
 		excessMinutes := excess.Minutes()
 		if excessMinutes <= 5 {
 			// display remain break time in total 5min
-			return "🔻  " + strconv.FormatFloat(5-excessMinutes, 'f', 0, 64) + " ☕"
+			return "▼ " + strconv.FormatFloat(5-excessMinutes, 'f', 0, 64) + " break"
 		} else {
 			// display the time excess after finish 5min break time
-			return "🔺  " + strconv.FormatFloat(excessMinutes-5, 'f', 0, 64) + "❗️"
+			return "▲ " + strconv.FormatFloat(excessMinutes-5, 'f', 0, 64) + " !!!"
 		}
 	}
 }
