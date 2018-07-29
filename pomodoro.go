@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -23,11 +24,12 @@ var noTime time.Time
 var notify *notificator.Notificator
 
 const usage = `
-github.com/justincampbell/tmux-pomodoro
+github.com/giangdo/tmux-pomodoro
 
   pomodoro start   Start a timer for 30 minutes
-  pomodoro status  Show the remaining time, or an exclamation point if done
-  pomodoro clear   Clear the timer
+  pomodoro status  Show number of done pomodoro and status of current pomodoro timer
+  pomodoro clear   Clear the current pomodoro timer
+  pomodoro reset   Reset number of done pomodoro to 0
 `
 const version = "v1.2.1"
 
@@ -121,7 +123,10 @@ func parseCommand(state State, command string) (newState State, output Output) {
 		notify.Push("Pomodoro", message, "", notificator.UR_NORMAL)
 		_, _ = exec.Command("say", message).Output()
 
+		logPomoDone()
 		refreshTmux()
+	case "reset":
+		cleanPomoDone()
 	case "":
 		flag.Usage()
 	default:
@@ -129,6 +134,47 @@ func parseCommand(state State, command string) (newState State, output Output) {
 		output.returnCode = 1
 	}
 
+	return
+}
+
+func cleanPomoDone() {
+	bytes := []byte("0")
+	err := ioutil.WriteFile(fileDonePath(), bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func logPomoDone() {
+	num, err := getPomodoDone()
+	if err != nil {
+		panic(err)
+	}
+
+	num++
+
+	str := strconv.Itoa(num)
+	bytes := []byte(str)
+	err = ioutil.WriteFile(fileDonePath(), bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func getPomodoDone() (num int, err error) {
+	bytes, err := ioutil.ReadFile(fileDonePath())
+	if err != nil {
+		bytes = []byte("0")
+		err = ioutil.WriteFile(fileDonePath(), bytes, 0644)
+		if err != nil {
+			return
+		}
+	}
+
+	str := string(bytes)
+	re := regexp.MustCompile(`\r?\n`)
+	str = re.ReplaceAllString(str, " ")
+	num, err = strconv.Atoi(str)
 	return
 }
 
@@ -172,17 +218,22 @@ func formatRemainingTime(existingTime time.Time, now time.Time) string {
 	remaining := existingTime.Sub(now)
 	remainingMinutes := remaining.Minutes()
 
+	num, err := getPomodoDone()
+	if err != nil {
+		panic(err)
+	}
+	out := strconv.Itoa(num) + "|"
 	if remainingMinutes >= 0 {
-		return "▼ " + strconv.FormatFloat(remainingMinutes, 'f', 0, 64) + " work "
+		return out + "▼ " + strconv.FormatFloat(remainingMinutes, 'f', 0, 64) + " work "
 	} else {
 		excess := now.Sub(existingTime)
 		excessMinutes := excess.Minutes()
 		if excessMinutes <= 5 {
 			// display remain break time in total 5min
-			return "▼ " + strconv.FormatFloat(5-excessMinutes, 'f', 0, 64) + " break"
+			return out + "▼ " + strconv.FormatFloat(5-excessMinutes, 'f', 0, 64) + " break"
 		} else {
 			// display the time excess after finish 5min break time
-			return "▲ " + strconv.FormatFloat(excessMinutes-5, 'f', 0, 64) + " !!!"
+			return out + "▲ " + strconv.FormatFloat(excessMinutes-5, 'f', 0, 64) + " !!!"
 		}
 	}
 }
@@ -219,6 +270,9 @@ func filePath() string {
 	return homeDir() + "/.pomodoro"
 }
 
+func fileDonePath() string {
+	return homeDir() + "/.pomodoro_done"
+}
 func pidFilePath() string {
 	return homeDir() + "/.pomodoro.pid"
 }

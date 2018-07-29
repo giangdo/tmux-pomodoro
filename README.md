@@ -31,3 +31,32 @@ bind-key p run-shell 'pomodoro start'
 * `clear` Clear the timer
 
 `start` and `clear` also call `tmux refresh-client -S`, which will instantly update your tmux status bar shell commands.
+
+### For Development: Explain how this program works
++ "start"  command: this program will:
+                        ->set end time base on get current time,  then store this end time in first line of ~/.pomodoro file
+                        +> kill running beeper process (this program, but started with "beep" commands)
+                        +> start another beeper process
+
++ "beep"   command:   - this is internal command, user can not use this command
+                      - This command will be trigger when user use "start" command
+                      - When program execute with this command, this process will wait until 30m, then it will
+                        -> stop timer
+                        +> notify :"Pomodoro done, take a break!"
+                        +> increase number of done pomodo timer by 1, save this number to ~/.pomodoro_done
+
++ "status" command: this program will:
+                        -> show number of done pomodoro today by reading info from ~/.pomodoro_done
+                        +> show status of current pomodoro timer
+                            -> read the information when the timer will be stopedd from ~/.pomodoro file
+                            +> get the current time
+                            +> remain = end time - current time
+                            +>if (remain < 30min)
+                                -> status = work
+                            +>if (-5min <= remain <= 0min)
+                                -> status = break
+                            +>if (remain < -5min)
+                                -> status = excess
+
++ "clear"  command: this command will delete everything in ~/.pomodoro file
++ "reset"  command: this command will delete everything in ~/.pomodoro_done
