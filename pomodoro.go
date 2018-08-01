@@ -128,8 +128,9 @@ func parseCommand(state State, command string) (newState State, output Output) {
 
 		for {
 			<-time.NewTicker(remind).C
-			var message = "It too late, Please start a new pomodoro!"
-			_ = tmux.DisplayMessage(message)
+			msg := "It too late, Please start a new pomodoro!"
+			notify.Push("Pomodoro", msg, "", notificator.UR_NORMAL)
+			_, _ = exec.Command("say", msg).Output()
 		}
 
 	case "reset":
