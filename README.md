@@ -44,7 +44,7 @@ bind-key p run-shell 'pomodoro start'
                         -> stop timer
                         +> notify :"Pomodoro done, take a break!"
                         +> increase number of done pomodo timer by 1, save this number to ~/.pomodoro_done
-                      - then program then get into loop infinitely to remind "It too late, Please start a new pomodoro!"
+                      - then program wait for 5m (break time) then get into infinte loop to remind "It too late, Please start a new pomodoro!"
                       - this beeper program is killed only when user use command "start" or "clear"
 
 + "status" command: this program will:

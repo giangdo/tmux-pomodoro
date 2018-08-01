@@ -19,7 +19,8 @@ import (
 const timeFormat = time.RFC3339
 
 var duration, _ = time.ParseDuration("30m")
-var remind, _ = time.ParseDuration("15m")
+var breakTime, _ = time.ParseDuration("5m")
+var remindTime, _ = time.ParseDuration("5m")
 var noTime time.Time
 var notify *notificator.Notificator
 
@@ -117,20 +118,35 @@ func parseCommand(state State, command string) (newState State, output Output) {
 		killRunningBeepers()
 		refreshTmux()
 	case "beep":
-		<-time.NewTicker(duration).C
-		var message = "Pomodoro done, take a break!"
-		_ = tmux.DisplayMessage(message)
-		notify.Push("Pomodoro", message, "", notificator.UR_NORMAL)
-		_, _ = exec.Command("say", message).Output()
-
-		logPomoDone()
-		refreshTmux()
-
+		// Wait to until end_time to notify
 		for {
-			<-time.NewTicker(remind).C
+			time.Sleep(5 * time.Second)
+			if time.Now().After(state.endTime) {
+				var message = "Pomodoro done, take a break!"
+				_ = tmux.DisplayMessage(message)
+				notify.Push("Pomodoro", message, "", notificator.UR_NORMAL)
+				_, _ = exec.Command("say", message).Output()
+
+				logPomoDone()
+				refreshTmux()
+				break
+			}
+		}
+
+		// Don't remind in break_time
+		for {
+			time.Sleep(5 * time.Second)
+			if time.Now().After(state.endTime.Add(breakTime)) {
+				break
+			}
+		}
+
+		// Start remind after break_time
+		for {
 			msg := "It too late, Please start a new pomodoro!"
 			notify.Push("Pomodoro", msg, "", notificator.UR_NORMAL)
 			_, _ = exec.Command("say", msg).Output()
+			<-time.NewTicker(remindTime).C
 		}
 
 	case "reset":
