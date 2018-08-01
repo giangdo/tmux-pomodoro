@@ -19,7 +19,7 @@ import (
 const timeFormat = time.RFC3339
 
 var duration, _ = time.ParseDuration("30m")
-var playDuration, _ = time.ParseDuration("15m")
+var remind, _ = time.ParseDuration("15m")
 var noTime time.Time
 var notify *notificator.Notificator
 
@@ -125,6 +125,13 @@ func parseCommand(state State, command string) (newState State, output Output) {
 
 		logPomoDone()
 		refreshTmux()
+
+		for {
+			<-time.NewTicker(remind).C
+			var message = "It too late, Please start a new pomodoro!"
+			_ = tmux.DisplayMessage(message)
+		}
+
 	case "reset":
 		cleanPomoDone()
 	case "":

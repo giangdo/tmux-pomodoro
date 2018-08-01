@@ -44,6 +44,8 @@ bind-key p run-shell 'pomodoro start'
                         -> stop timer
                         +> notify :"Pomodoro done, take a break!"
                         +> increase number of done pomodo timer by 1, save this number to ~/.pomodoro_done
+                      - then program then get into loop infinitely to remind "It too late, Please start a new pomodoro!"
+                      - this beeper program is killed only when user use command "start" or "clear"
 
 + "status" command: this program will:
                         -> show number of done pomodoro today by reading info from ~/.pomodoro_done
@@ -59,4 +61,10 @@ bind-key p run-shell 'pomodoro start'
                                 -> status = excess
 
 + "clear"  command: this command will delete everything in ~/.pomodoro file
+                    then kill running beeper process (this program, but started with "beep" commands)
+
 + "reset"  command: this command will delete everything in ~/.pomodoro_done
+
+### TODO:
+    - create a "play" command to relax after had finished 4 or 5 pomodoro timer
+    - show the total number of continuous successul pomodoro timer
