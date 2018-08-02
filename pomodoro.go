@@ -29,9 +29,10 @@ github.com/giangdo/tmux-pomodoro
 
   pomodoro start   Start a timer for 30 minutes
   pomodoro status  Show number of done pomodoro and status of current pomodoro timer
-  pomodoro stop    stop the current pomodoro timer
-  pomodoro cancel  mark previous finished pomodoro as failure, stop the current pomodoro timer
-  pomodoro reset   Reset number of done pomodoro to 0, stop the current pomodoro timer
+  pomodoro stop    Stop the current pomodoro timer
+  pomodoro reset   Reset number of done pomodoro to 0        , stop the current pomodoro timer
+  pomodoro cancel  Mark previous finished pomodoro as failure, stop the current pomodoro timer
+  pomodoro add     Increase done pomodoro numer by 1
 `
 const version = "v1.2.1"
 
@@ -155,6 +156,10 @@ func parseCommand(state State, command string) (output Output) {
 		killRunningBeepers()
 		refreshTmux()
 
+	case "add":
+		addPomoDone(state)
+		output.text = "Pomodoro add!"
+
 	case "":
 		flag.Usage()
 	default:
@@ -189,6 +194,30 @@ func cancelPomoDone(state State) {
 				panic(err)
 			}
 		}
+	}
+}
+
+func addPomoDone(state State) {
+	if state.now.After(state.endTime.Add(duration)) {
+		num, err := getPomodoDone()
+		if err != nil {
+			panic(err)
+		}
+		if num >= 0 {
+			num++
+
+			str := strconv.Itoa(num)
+			bytes := []byte(str)
+			err = ioutil.WriteFile(fileDonePath(), bytes, 0644)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		writeTime(state.endTime.Add(duration))
+		refreshTmux()
+	} else {
+		fmt.Printf("Your working time is NOT qualified to add!")
 	}
 }
 

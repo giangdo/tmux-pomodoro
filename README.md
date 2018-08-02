@@ -64,9 +64,12 @@ bind-key p run-shell 'pomodoro start'
                    then kill running beeper process (this program, but started with "beep" commands)
 
 + "reset"  command: this command will delete everything in ~/.pomodoro_done then execute what "stop" command do
+
 + "cancel" command: this command will mark previous expired pomodoro as failure ->
                         decrease current number of done pomodoro today by 1
                         then execute what "stop" command do
+
++ "add"    command: this command will increase number of done pomodoro today by 1 if working time is qualified
 
 ### TODO:
     - create a "play" command to relax after had finished 4 or 5 pomodoro timer
