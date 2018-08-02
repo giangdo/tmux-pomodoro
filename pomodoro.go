@@ -29,8 +29,9 @@ github.com/giangdo/tmux-pomodoro
 
   pomodoro start   Start a timer for 30 minutes
   pomodoro status  Show number of done pomodoro and status of current pomodoro timer
-  pomodoro clear   Clear the current pomodoro timer
-  pomodoro reset   Reset number of done pomodoro to 0
+  pomodoro stop    stop the current pomodoro timer
+  pomodoro cancel  mark previous finished pomodoro as failure, stop the current pomodoro timer
+  pomodoro reset   Reset number of done pomodoro to 0, stop the current pomodoro timer
 `
 const version = "v1.2.1"
 
@@ -75,11 +76,7 @@ func main() {
 		AppName: "tmux-pomodoro",
 	})
 
-	newState, output := parseCommand(state, command)
-
-	if newState.endTime != state.endTime {
-		writeTime(newState.endTime)
-	}
+	output := parseCommand(state, command)
 
 	if output.text != "" {
 		fmt.Println(output.text)
@@ -94,15 +91,12 @@ func refreshTmux() {
 	_ = tmux.RefreshClient("-S")
 }
 
-func parseCommand(state State, command string) (newState State, output Output) {
-	newState = state
-
+func parseCommand(state State, command string) (output Output) {
 	switch command {
 	case "start":
-		newState.endTime = state.now.Add(duration)
+		writeTime(state.now.Add(duration))
 		output.text = "Timer started, 30 minutes remaining"
 		notify.Push("Pomodoro", output.text, "", notificator.UR_NORMAL)
-		_, _ = exec.Command("say", output.text).Output()
 
 		killRunningBeepers()
 		_ = startBeeper()
@@ -113,7 +107,6 @@ func parseCommand(state State, command string) (newState State, output Output) {
 		}
 		output.text = formatRemainingTime(state.endTime, state.now)
 	case "stop":
-		newState.endTime = noTime
 		output.text = "Pomodoro stop!"
 		killRunningBeepers()
 		refreshTmux()
@@ -152,14 +145,12 @@ func parseCommand(state State, command string) (newState State, output Output) {
 
 	case "reset":
 		cleanPomoDone()
-		newState.endTime = noTime
 		output.text = "Pomodoro reset!"
 		killRunningBeepers()
 		refreshTmux()
 
 	case "cancel":
 		cancelPomoDone(state)
-		newState.endTime = noTime
 		output.text = "Pomodoro cancel!"
 		killRunningBeepers()
 		refreshTmux()
