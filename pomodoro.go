@@ -112,11 +112,12 @@ func parseCommand(state State, command string) (newState State, output Output) {
 			return
 		}
 		output.text = formatRemainingTime(state.endTime, state.now)
-	case "clear":
+	case "stop":
 		newState.endTime = noTime
-		output.text = "Pomodoro cleared!"
+		output.text = "Pomodoro stop!"
 		killRunningBeepers()
 		refreshTmux()
+
 	case "beep":
 		// Wait to until end_time to notify
 		for {
@@ -151,6 +152,18 @@ func parseCommand(state State, command string) (newState State, output Output) {
 
 	case "reset":
 		cleanPomoDone()
+		newState.endTime = noTime
+		output.text = "Pomodoro reset!"
+		killRunningBeepers()
+		refreshTmux()
+
+	case "cancel":
+		cancelPomoDone(state)
+		newState.endTime = noTime
+		output.text = "Pomodoro cancel!"
+		killRunningBeepers()
+		refreshTmux()
+
 	case "":
 		flag.Usage()
 	default:
@@ -166,6 +179,25 @@ func cleanPomoDone() {
 	err := ioutil.WriteFile(fileDonePath(), bytes, 0644)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func cancelPomoDone(state State) {
+	if state.now.After(state.endTime) {
+		num, err := getPomodoDone()
+		if err != nil {
+			panic(err)
+		}
+		if num > 0 {
+			num--
+
+			str := strconv.Itoa(num)
+			bytes := []byte(str)
+			err = ioutil.WriteFile(fileDonePath(), bytes, 0644)
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 }
 
