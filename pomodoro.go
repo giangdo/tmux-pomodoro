@@ -198,7 +198,7 @@ func cancelPomoDone(state State) {
 }
 
 func addPomoDone(state State) {
-	if state.now.After(state.endTime.Add(duration)) {
+	if state.now.After(state.endTime.Add(duration).Add(breakTime)) {
 		num, err := getPomodoDone()
 		if err != nil {
 			panic(err)
@@ -214,7 +214,7 @@ func addPomoDone(state State) {
 			}
 		}
 
-		writeTime(state.endTime.Add(duration))
+		writeTime(state.endTime.Add(duration).Add(breakTime))
 		refreshTmux()
 	} else {
 		fmt.Printf("Your working time is NOT qualified to add!")
