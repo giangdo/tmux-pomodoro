@@ -9,7 +9,7 @@
 Or, if you have a [Go development environment](https://golang.org/doc/install):
 
 ```
-go get github.com/justincampbell/tmux-pomodoro
+go get github.com/giangdo/tmux-pomodoro
 ```
 
 ## Usage
